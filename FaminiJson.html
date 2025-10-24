@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset = "utf-8"/> 
+<title>JSON</title>
+</head>
+<body>
+<h1><center>Menard Famini</center></h1>
+
+<h2>Student Record</h2>
+<section>
+    <form id="recordForm">
+
+<label>ID:</label>
+<input type="text" id="idinput" placeholder="Enter ID"> <br><br>
+
+<label>
+Name: <br>
+<input type="text" id="nameinput" placeholder="Enter Your Name" required/>
+</label><br>
+
+<label>
+Age: <br>
+<input type="number" id="ageinput" placeholder="Enter Your Age" min="0"/>
+</label><br>
+
+<label>
+Course: <br/>
+<input type="text" id="courseinput" placeholder="Enter your Course"/>
+</label><br/>
+ <br>
+<button type="button" onclick="saveRecord()">Save</button>
+
+</form>
+</section>
+
+<h2>Saved Records</h2>
+<table border ="1" id="recordsTable">
+
+<tr> <th>ID</th>
+     <th>Name</th> 
+     <th>Age</th>
+    <th>Course</th>
+</tr>
+
+</table>
+
+
+<script>
+    const DB_KEY ='Json_students_db_v1';
+
+    const seedData = [
+        {id: 's1', name:'Alice Johnson', age:'22', course:'Computer Science'},
+        {id: 's2', name:'Ben Carter', age:'21', course:'Mathematics'},
+        {id: 's3', name:'Cara Diaz', age:'23', course:'Physics'},
+    ];
+
+    let db = [];
+    let editIndex = -1;  // Added to track editing state
+
+    function loadDB(){
+        const raw= localStorage.getItem(DB_KEY);
+        if (raw) {
+            db = JSON.parse(raw);  // load from storage if exists
+        } else {
+            db = [...seedData];
+            saveDB();
+        }
+    }
+
+    function saveDB(){
+        localStorage.setItem(DB_KEY,
+        JSON.stringify(db));
+    }
+
+    function displayRecords(){
+        const table = document.getElementById('recordsTable');
+        table.innerHTML = '<tr><th>ID</th> <th>Name</th> <th>Age</th> <th>Course</th> <th>Action</th> </tr>';
+
+        db.forEach(r=> {
+            table.innerHTML += `<tr>
+                <td>${r.id}</td>
+                <td>${r.name}</td>
+                <td>${r.age}</td>
+                <td>${r.course}</td>
+                <td>
+                  <button type="button" onclick="editRecord('${r.id}')">Edit</button>
+                  <button type="button" onclick="deleteRecord('${r.id}')">Delete</button>
+                </td>
+            </tr>`;
+        });
+    }
+
+    loadDB();
+    displayRecords();
+
+    function saveRecord(){
+        const id = document.getElementById('idinput').value.trim();
+        const name = document.getElementById('nameinput').value.trim();
+        const age = Number(document.getElementById('ageinput').value);
+        const course = document.getElementById('courseinput').value.trim();
+
+        if (!id || !name) {
+            alert('ID and Name are required.');
+            return;
+        }
+
+        const newRecord = {id, name, age, course};
+
+        if (editIndex === -1) {
+            // Check if ID already exists
+            if (db.find(r => r.id === id)) {
+                alert('ID already exists! Use a different ID or edit the existing record.');
+                return;
+            }
+            db.push(newRecord);
+        } else {
+            db[editIndex] = newRecord;
+            editIndex = -1;
+        }
+
+        saveDB();
+        console.log('Record saved:', newRecord);
+        document.getElementById('recordForm').reset();
+        displayRecords();
+    }
+
+    function editRecord(id){
+        const idx = db.findIndex(r => r.id === id);
+        if (idx === -1) return;
+
+        const record = db[idx];
+        document.getElementById('idinput').value = record.id;
+        document.getElementById('nameinput').value = record.name;
+        document.getElementById('ageinput').value = record.age;
+        document.getElementById('courseinput').value = record.course;
+        editIndex = idx;
+    } 
+    function deleteRecord(id){
+        const ok = confirm(`Delete Record with ID "${id}"?`);
+        if (!ok) return;
+        const idx = db.findIndex(r=> r.id===id);
+        if (idx === -1){
+            alert('Record not found');
+            return;
+        }
+        db.splice(idx, 1);
+        saveDB();
+        displayRecords();
+    }
+</script>
+</body>
+</html>
